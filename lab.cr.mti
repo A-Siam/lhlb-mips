@@ -1,0 +1,113 @@
+C:/Users/abdullah/Desktop/project/mips.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/mips.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module mips
+
+Top level modules:
+	mips
+
+} {} {}} C:/Users/abdullah/Desktop/project/maindec.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/maindec.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module maindec
+
+Top level modules:
+	maindec
+
+} {} {}} C:/Users/abdullah/Desktop/project/sl2.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/sl2.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module sl2
+
+Top level modules:
+	sl2
+
+} {} {}} C:/Users/abdullah/Desktop/project/signext.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/signext.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module signext
+
+Top level modules:
+	signext
+
+} {} {}} {C:/Users/abdullah/Desktop/project/mux2 #.sv} {1 {vlog -work work -sv {C:/Users/abdullah/Desktop/project/mux2 #.sv}
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module mux2
+
+Top level modules:
+	mux2
+
+} {} {}} C:/Users/abdullah/Desktop/project/extnext.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/extnext.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module extnext
+
+Top level modules:
+	extnext
+
+} {} {}} C:/Users/abdullah/Desktop/project/alu.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/alu.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module alu
+
+Top level modules:
+	alu
+
+} {} {}} C:/Users/abdullah/Desktop/project/top.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/top.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module top
+
+Top level modules:
+	top
+
+} {} {}} C:/Users/abdullah/Desktop/project/dmem.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/dmem.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module dmem
+
+Top level modules:
+	dmem
+
+} {} {}} C:/Users/abdullah/Desktop/project/controller.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/controller.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module controller
+
+Top level modules:
+	controller
+
+} {} {}} {C:/Users/abdullah/Desktop/project/flopr #.sv} {1 {vlog -work work -sv {C:/Users/abdullah/Desktop/project/flopr #.sv}
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module flopr
+
+Top level modules:
+	flopr
+
+} {} {}} C:/Users/abdullah/Desktop/project/aludec.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/aludec.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module aludec
+
+Top level modules:
+	aludec
+
+} {} {}} C:/Users/abdullah/Desktop/project/regfile.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/regfile.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module regfile
+
+Top level modules:
+	regfile
+
+} {} {}} C:/Users/abdullah/Desktop/project/testbench.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/testbench.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module testbench
+
+Top level modules:
+	testbench
+
+} {} {}} C:/Users/abdullah/Desktop/project/adder.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/adder.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module adder
+
+Top level modules:
+	adder
+
+} {} {}} C:/Users/abdullah/Desktop/project/imem.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/imem.sv
+Model Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012
+-- Compiling module imem
+
+Top level modules:
+	imem
+
+} {} {}}
