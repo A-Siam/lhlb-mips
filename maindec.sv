@@ -9,7 +9,7 @@ module maindec(input logic [5:0] op,
     output logic b,
     output logic [1:0] aluop);
 
-logic [11:0] controls;
+logic [12:0] controls;
 
 assign {regwrite, regdst, alusrc, branch, memwrite,
         memtoreg, jump, aluop, ne,half, b} = controls;
