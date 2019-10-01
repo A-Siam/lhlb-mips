@@ -1,5 +1,5 @@
 lh, 
-alucontrol,010
+alucontrol,xxx
 regwrite,1
 regdst,0
 alusrc,01
