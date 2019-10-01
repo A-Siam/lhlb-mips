@@ -1,16 +1,5 @@
 ## Load half and load byte
 
-### TOC:
-      * [Load half and load byte](#load-half-and-load-byte)
-         * [introduction:](#introduction)
-         * [Recipe:](#recipe)
-            * [Items/Pins:](#itemspins)
-            * [implementation:](#implementation)
-            * [schematic:](#schematic)
-         * [Testing:](#testing)
-         * [Reference:](#reference)
-
-
 ### introduction:
 
 a "Load half" and "Load byte" implementation in MIPS micro-architecture build upon Harris design in their book (reference)
