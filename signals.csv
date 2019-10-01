@@ -1,4 +1,4 @@
-lh
+lh, 
 alucontrol,010
 regwrite,1
 regdst,0
@@ -11,7 +11,7 @@ aluop,00
 ne,0
 half,1
 b,0
-lb
+lb, 
 alucontrol,010
 regwrite,1
 regdst,0
