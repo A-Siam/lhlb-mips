@@ -1,0 +1,1012 @@
+[1mdiff --git a/controller.sv b/controller.sv[m
+[1mindex 4ffcc48..f5d1a1d 100644[m
+[1m--- a/controller.sv[m
+[1m+++ b/controller.sv[m
+[36m@@ -6,13 +6,15 @@[m [mmodule controller(input logic [5:0] op, funct,[m
+                     output logic regdst, regwrite,[m
+                     output logic jump,[m
+                     output logic ne,[m
+[32m+[m[32m                    output logic half,[m
+[32m+[m[32m                    output logic b,[m
+                     output logic [2:0] alucontrol);[m
+ [m
+ logic [1:0] aluop;[m
+ logic branch;[m
+ [m
+ maindec md(op, memtoreg, memwrite, branch,[m
+[31m-            alusrc, regdst, regwrite, jump,ne, aluop);[m
+[32m+[m[32m            alusrc, regdst, regwrite, jump, ne, half, b, aluop);[m
+ [m
+ aludec ad(funct, aluop, alucontrol);[m
+ [m
+[1mdiff --git a/datapath.sv b/datapath.sv[m
+[1mindex 5d76392..54d9221 100644[m
+[1m--- a/datapath.sv[m
+[1m+++ b/datapath.sv[m
+[36m@@ -3,7 +3,7 @@[m [mmodule datapath(input logic clk, reset,[m
+                 input logic [1:0] alusrc,[m
+                 input logic ne,[m
+                 input logic regdst,[m
+[31m-                input logic regwrite, jump,[m
+[32m+[m[32m                input logic regwrite, jump, half,b,[m
+                 input logic [2:0] alucontrol,[m
+                 output logic zero,[m
+                 output logic [31:0] pc,[m
+[36m@@ -17,6 +17,10 @@[m [mmodule datapath(input logic clk, reset,[m
+     logic [31:0] signimm, signimmsh;[m
+     logic [31:0] srca, srcb;[m
+     logic [31:0] result;[m
+[32m+[m[32m    logic [31:0] half_result_extended;[m
+[32m+[m[32m    logic [31:0] hw_dataMemeoryOutput; // datamemory after the half word design[m
+[32m+[m[32m    logic [31:0] ob_dataMemeoryOutput; // datamemory after the one byte design[m
+[32m+[m[32m    logic [31:0] one_byte_result_sign_extended;[m
+ [m
+     // next PC logic[m
+     flopr #(32) pcreg(clk, reset, pcnext, pc);[m
+[36m@@ -27,13 +31,27 @@[m [mmodule datapath(input logic clk, reset,[m
+ [m
+     adder pcadd2(pcplus4, signimmsh, pcbranch); //branch or jumb[m
+ [m
+[32m+[m[32m    //half[m
+[32m+[m[32m    signext se2(result[15:0], half_result_extended); //extend sign[m
+[32m+[m[32m    //mux after the halfword[m
+[32m+[m[32m    mux2 #(32) halfmux(result,half_result_extended,half,hw_dataMemeoryOutput);[m
+[32m+[m
+[32m+[m[32m    // one byte[m
+[32m+[m[32m    signex #(24,8) se3(result[7:0], one_byte_result_sign_extended);[m
+[32m+[m[32m    //mux after the one byte word[m
+[32m+[m[32m    mux2 #(32) ob_mux(hw_dataMemeoryOutput,[m
+[32m+[m[32m                       one_byte_result_sign_extended,[m
+[32m+[m[32m                       b,[m
+[32m+[m[32m                       ob_dataMemeoryOutput);[m
+[32m+[m
+[32m+[m
+     mux2 #(32) pcbrmux(pcplus4, pcbranch, pcsrc, pcnextbr);[m
+     mux2 #(32) pcmux(pcnextbr, {pcplus4[31:28],[m
+                     instr[25:0], 2'b00}, jump, pcnext);[m
+ [m
+[31m-    // register file logic[m
+[32m+[m
+     regfile rf(clk, regwrite, instr[25:21], instr[20:16],[m
+[31m-                writereg, result, srca, writedata);[m
+[32m+[m[32m                writereg, one_byte_result_sign_extended, srca, writedata);[m
+ [m
+     mux2 #(5) wrmux(instr[20:16], instr[15:11],[m
+                     regdst, writereg);[m
+[1mdiff --git a/lab.cr.mti b/lab.cr.mti[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6c038e8[m
+[1m--- /dev/null[m
+[1m+++ b/lab.cr.mti[m
+[36m@@ -0,0 +1,120 @@[m
+[32m+[m[32mC:/Users/abdullah/Desktop/project/maindec.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/maindec.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module maindec[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mmaindec[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/mips.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/mips.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module mips[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mmips[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/sl2.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/sl2.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module sl2[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32msl2[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/signext.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/signext.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module signext[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32msignext[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/datapath.sv {1 {vlog -work work -sv {C:\Users\abdullah\Desktop\project\datapath.sv}[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module datapath[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mdatapath[m
+[32m+[m
+[32m+[m[32m} {} {}} {C:/Users/abdullah/Desktop/project/mux2 #.sv} {1 {vlog -work work -sv {C:/Users/abdullah/Desktop/project/mux2 #.sv}[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module mux2[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mmux2[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/extnext.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/extnext.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module extnext[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mextnext[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/alu.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/alu.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module alu[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32malu[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/top.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/top.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module top[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mtop[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/dmem.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/dmem.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module dmem[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mdmem[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/controller.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/controller.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module controller[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mcontroller[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/regfile.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/regfile.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module regfile[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mregfile[m
+[32m+[m
+[32m+[m[32m} {} {}} {C:/Users/abdullah/Desktop/project/flopr #.sv} {1 {vlog -work work -sv {C:/Users/abdullah/Desktop/project/flopr #.sv}[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module flopr[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mflopr[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/aludec.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/aludec.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module aludec[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32maludec[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/testbench.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/testbench.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module testbench[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mtestbench[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/imem.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/imem.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module imem[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32mimem[m
+[32m+[m
+[32m+[m[32m} {} {}} C:/Users/abdullah/Desktop/project/adder.sv {1 {vlog -work work -sv C:/Users/abdullah/Desktop/project/adder.sv[m
+[32m+[m[32mModel Technology ModelSim ALTERA vlog 10.1b Compiler 2012.04 Apr 27 2012[m
+[32m+[m[32m-- Compiling module adder[m
+[32m+[m
+[32m+[m[32mTop level modules:[m
+[32m+[m	[32madder[m
+[32m+[m
+[32m+[m[32m} {} {}}[m
+[1mdiff --git a/lab.mpf b/lab.mpf[m
+[1mindex 091c6f8..0161f75 100644[m
+[1m--- a/lab.mpf[m
+[1m+++ b/lab.mpf[m
+[36m@@ -251,7 +251,7 @@[m [mResolution = ps[m
+ UserTimeUnit = default[m
+ [m
+ ; Default run length[m
+[31m-RunLength = 100 ps[m
+[32m+[m[32mRunLength = 100 ns[m
+ [m
+ ; Maximum iterations that can be run without advancing simulation time[m
+ IterationLimit = 5000[m
+[36m@@ -443,39 +443,39 @@[m [mProject_DefaultLib = work[m
+ Project_SortMethod = unused[m
+ Project_Files_Count = 17[m
+ Project_File_0 = C:/Users/abdullah/Desktop/project/sl2.sv[m
+[31m-Project_File_P_0 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 14 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_0 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 14 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_1 = C:/Users/abdullah/Desktop/project/maindec.sv[m
+[31m-Project_File_P_1 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569896979 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 9 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_1 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569896690 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 9 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_2 = C:/Users/abdullah/Desktop/project/mips.sv[m
+[31m-Project_File_P_2 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569896979 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 10 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_2 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 last_compile 1569889141 folder {Top Level} cover_branch 0 cover_fsm 0 vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 10 dont_compile 0 cover_expr 0 cover_stmt 0[m
+ Project_File_3 = C:/Users/abdullah/Desktop/project/signext.sv[m
+[31m-Project_File_P_3 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 13 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_3 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 13 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_4 = C:/Users/abdullah/Desktop/project/mux2 #.sv[m
+[31m-Project_File_P_4 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 11 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_4 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 11 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_5 = C:/Users/abdullah/Desktop/project/datapath.sv[m
+[31m-Project_File_P_5 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569896979 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 4 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_5 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569889622 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 4 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_6 = C:/Users/abdullah/Desktop/project/extnext.sv[m
+[31m-Project_File_P_6 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 6 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_6 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 6 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_7 = C:/Users/abdullah/Desktop/project/alu.sv[m
+[31m-Project_File_P_7 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 1 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_7 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 1 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_8 = C:/Users/abdullah/Desktop/project/top.sv[m
+[31m-Project_File_P_8 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569893230 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 16 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_8 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 last_compile 1569893230 folder {Top Level} cover_branch 0 cover_fsm 0 vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 16 dont_compile 0 cover_expr 0 cover_stmt 0[m
+ Project_File_9 = C:/Users/abdullah/Desktop/project/dmem.sv[m
+[31m-Project_File_P_9 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569893300 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 5 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_9 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 last_compile 1569893300 folder {Top Level} cover_branch 0 cover_fsm 0 vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 5 dont_compile 0 cover_expr 0 cover_stmt 0[m
+ Project_File_10 = C:/Users/abdullah/Desktop/project/controller.sv[m
+[31m-Project_File_P_10 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569896979 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 3 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_10 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 last_compile 1569888520 folder {Top Level} cover_branch 0 cover_fsm 0 vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 3 dont_compile 0 cover_expr 0 cover_stmt 0[m
+ Project_File_11 = C:/Users/abdullah/Desktop/project/flopr #.sv[m
+[31m-Project_File_P_11 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 7 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_11 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 7 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_12 = C:/Users/abdullah/Desktop/project/aludec.sv[m
+[31m-Project_File_P_12 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 2 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_12 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 2 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_13 = C:/Users/abdullah/Desktop/project/regfile.sv[m
+[31m-Project_File_P_13 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 12 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_13 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 12 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_14 = C:/Users/abdullah/Desktop/project/imem.sv[m
+[31m-Project_File_P_14 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 8 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_14 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 8 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_15 = C:/Users/abdullah/Desktop/project/adder.sv[m
+[31m-Project_File_P_15 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 cover_branch 0 folder {Top Level} last_compile 1569780336 cover_fsm 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 0 cover_expr 0 dont_compile 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_15 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 folder {Top Level} cover_branch 0 cover_fsm 0 last_compile 1569780336 vlog_noload 0 cover_excludedefault 0 vlog_enable0In 0 vlog_disableopt 0 cover_covercells 0 voptflow 1 cover_optlevel 3 vlog_showsource 0 vlog_hazard 0 toggle - vlog_0InOptions {} ood 0 cover_noshort 0 vlog_upper 0 compile_to work vlog_options {} compile_order 0 cover_expr 0 dont_compile 0 cover_stmt 0[m
+ Project_File_16 = C:/Users/abdullah/Desktop/project/testbench.sv[m
+[31m-Project_File_P_16 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 cover_fsm 0 last_compile 1569896979 vlog_noload 0 cover_branch 0 folder {Top Level} vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 15 dont_compile 0 cover_expr 0 cover_stmt 0[m
+[32m+[m[32mProject_File_P_16 = cover_toggle 0 vlog_protect 0 file_type systemverilog group_id 0 cover_exttoggle 0 cover_nofec 0 cover_cond 0 vlog_1995compat SV vlog_nodebug 0 vlog_noload 0 last_compile 1569896253 folder {Top Level} cover_branch 0 cover_fsm 0 vlog_enable0In 0 cover_excludedefault 0 vlog_disableopt 0 cover_covercells 0 vlog_hazard 0 vlog_showsource 0 cover_optlevel 3 voptflow 1 ood 0 vlog_0InOptions {} toggle - vlog_options {} compile_to work vlog_upper 0 cover_noshort 0 compile_order 15 dont_compile 0 cover_expr 0 cover_stmt 0[m
+ Project_Sim_Count = 0[m
+ Project_Folder_Count = 0[m
+ Echo_Compile_Output = 0[m
+[1mdiff --git a/maindec.sv b/maindec.sv[m
+[1mindex b8b81b8..9b1e01b 100644[m
+[1m--- a/maindec.sv[m
+[1m+++ b/maindec.sv[m
+[36m@@ -5,24 +5,28 @@[m [mmodule maindec(input logic [5:0] op,[m
+     output logic regdst, regwrite,[m
+     output logic jump,[m
+     output logic ne,[m
+[32m+[m[32m    output logic half,[m
+[32m+[m[32m    output logic b,[m
+     output logic [1:0] aluop);[m
+ [m
+[31m-logic [10:0] controls;[m
+[32m+[m[32mlogic [12:0] controls;[m
+ [m
+ assign {regwrite, regdst, alusrc, branch, memwrite,[m
+[31m-        memtoreg, jump, aluop, ne} = controls;[m
+[32m+[m[32m        memtoreg, jump, aluop, ne,half, b} = controls;[m
+ [m
+ [m
+ always_comb[m
+     case(op)[m
+[31m-        6'b000000: controls <= 11'b11000000100; // RTYPE[m
+[31m-        6'b100011: controls <= 11'b10010010000; // LW[m
+[31m-        6'b101011: controls <= 11'b00010100000; // SW[m
+[31m-        6'b000100: controls <= 11'b00001000010; // BEQ[m
+[31m-        6'b001000: controls <= 11'b10010000000; // ADDI[m
+[31m-        6'b001101: controls <= 11'b10110000110; // ORI[m
+[31m-        6'b000010: controls <= 11'b00000001000; // J[m
+[31m-        6'b000101: controls <= 11'b00001000011;  // BNQ[m
+[31m-        default: controls <= 9'bxxxxxxxxx; // illegal op[m
+[32m+[m[32m        6'b000000: controls <= 13'b1100000010000; // RTYPE[m
+[32m+[m[32m        6'b100011: controls <= 13'b1001001000000; // LW[m
+[32m+[m[32m        6'b101011: controls <= 13'b0001010000000; // SW[m
+[32m+[m[32m        6'b000100: controls <= 13'b0000100001000; // BEQ[m
+[32m+[m[32m        6'b001000: controls <= 13'b1001000000000; // ADDI[m
+[32m+[m[32m        6'b001101: controls <= 13'b1011000011000; // ORI[m
+[32m+[m[32m        6'b000010: controls <= 13'b0000000100000; // J[m
+[32m+[m[32m        6'b000101: controls <= 13'b0000100001100;  // BNQ[m
+[32m+[m[32m        6'b100001: controls <= 13'b1001001000010; // LH[m
+[32m+[m[32m        6'b100000: controls <= 13'b1001001000011; // LB[m
+[32m+[m[32m        default: controls <= 13'bxxxxxxxxxxxxx; // illegal op[m
+     endcase[m
+ endmodule[m
+\ No newline at end of file[m
+[1mdiff --git a/mips.sv b/mips.sv[m
+[1mindex c04a384..7c521c2 100644[m
+[1m--- a/mips.sv[m
+[1m+++ b/mips.sv[m
+[36m@@ -6,7 +6,7 @@[m [mmodule mips(input logic clk, reset,[m
+             input logic [31:0] readdata);[m
+ [m
+ logic memtoreg, ne, regdst,[m
+[31m-    regwrite, jump, pcsrc, zero;[m
+[32m+[m[32m    regwrite, jump, pcsrc, zero, half,b;[m
+ [m
+ logic [1:0] alusrc;[m
+ [m
+[36m@@ -14,11 +14,11 @@[m [mlogic [2:0] alucontrol;[m
+ [m
+ controller c(instr[31:26], instr[5:0], zero,[m
+             memtoreg, memwrite, pcsrc,[m
+[31m-            alusrc, regdst, regwrite, jump,ne,[m
+[32m+[m[32m            alusrc, regdst, regwrite, jump,ne,half,b,[m
+             alucontrol);[m
+ [m
+ datapath dp(clk, reset, memtoreg, pcsrc,[m
+[31m-            alusrc, ne, regdst, regwrite, jump,[m
+[32m+[m[32m            alusrc, ne, regdst, regwrite, jump,half,b,[m
+             alucontrol,[m
+             zero, pc, instr,[m
+             aluout, writedata, readdata);[m
+[1mdiff --git a/mux.sv b/mux.sv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/testbench.sv b/testbench.sv[m
+[1mindex 1946610..ad7cc1d 100644[m
+[1m--- a/testbench.sv[m
+[1m+++ b/testbench.sv[m
+[36m@@ -12,6 +12,7 @@[m [mtop dut (clk, reset, writedata, dataadr, memwrite);[m
+ initial[m
+     begin[m
+     reset <= 1; # 22; reset <= 0;[m
+[32m+[m[32m    $display("gn");[m
+     end[m
+ [m
+ // generate clock to sequence tests[m
+[1mdiff --git a/work/_info b/work/_info[m
+[1mindex fd0ffae..2779631 100644[m
+[1m--- a/work/_info[m
+[1m+++ b/work/_info[m
+[36m@@ -20,7 +20,7 @@[m [mr1[m
+ 31[m
+ Z11 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/adder.sv|[m
+ Z12 o-work work -sv -O0[m
+[31m-Z13 !s108 1569897036.731000[m
+[32m+[m[32mZ13 !s108 1569896697.641000[m
+ Z14 !s107 C:/Users/abdullah/Desktop/project/adder.sv|[m
+ !i10b 1[m
+ !s85 0[m
+[36m@@ -42,7 +42,7 @@[m [mr1[m
+ 31[m
+ Z21 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/alu.sv|[m
+ R12[m
+[31m-Z22 !s108 1569897036.930000[m
+[32m+[m[32mZ22 !s108 1569896697.828000[m
+ Z23 !s107 C:/Users/abdullah/Desktop/project/alu.sv|[m
+ !i10b 1[m
+ !s85 0[m
+[36m@@ -64,20 +64,20 @@[m [mr1[m
+ 31[m
+ Z30 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/aludec.sv|[m
+ R12[m
+[31m-Z31 !s108 1569897037.142000[m
+[32m+[m[32mZ31 !s108 1569896698.094000[m
+ Z32 !s107 C:/Users/abdullah/Desktop/project/aludec.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vcontroller[m
+ R1[m
+[31m-Z33 !s100 YXAc^@K`]dEXCSK^^=QZH1[m
+[31m-Z34 IaC?aN1Hh:8LMgm2?9PnIY0[m
+[31m-Z35 V=IXQ75SCR^i3`PCFPDElM3[m
+[32m+[m[32mZ33 !s100 8z:J>IVMWLgCFPoK1UUAY2[m
+[32m+[m[32mZ34 I[XFFa1HzBV@S4BU6BO]hg2[m
+[32m+[m[32mZ35 VSQ9GCY_?BP2_WDBLZ2IC82[m
+ Z36 !s105 controller_sv_unit[m
+ S1[m
+ R6[m
+[31m-Z37 w1569896979[m
+[32m+[m[32mZ37 w1569888520[m
+ Z38 8C:/Users/abdullah/Desktop/project/controller.sv[m
+ Z39 FC:/Users/abdullah/Desktop/project/controller.sv[m
+ L0 1[m
+[36m@@ -86,294 +86,316 @@[m [mr1[m
+ 31[m
+ Z40 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/controller.sv|[m
+ R12[m
+[31m-Z41 !s108 1569897037.357000[m
+[32m+[m[32mZ41 !s108 1569896698.266000[m
+ Z42 !s107 C:/Users/abdullah/Desktop/project/controller.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vdatapath[m
+ R1[m
+[31m-Z43 !s100 cNP_PSLFH^DFA@^n8GB<73[m
+[31m-Z44 ITeBkl60ig2cQA=mR9A=GQ1[m
+[31m-Z45 VUIZ6C?E6<@GiSzZSX;>AP0[m
+[32m+[m[32mZ43 !s100 5CeUL2LM?8AlP`LjPEenP3[m
+[32m+[m[32mZ44 IQHnOha[n7Q5=HQ^C;Q8cP2[m
+[32m+[m[32mZ45 VMCY^o47eVMXm7A8?>J?SW1[m
+ Z46 !s105 datapath_sv_unit[m
+ S1[m
+ R6[m
+[31m-R37[m
+[31m-Z47 8C:/Users/abdullah/Desktop/project/datapath.sv[m
+[31m-Z48 FC:/Users/abdullah/Desktop/project/datapath.sv[m
+[32m+[m[32mZ47 w1569889622[m
+[32m+[m[32mZ48 8C:\Users\abdullah\Desktop\project\datapath.sv[m
+[32m+[m[32mZ49 FC:\Users\abdullah\Desktop\project\datapath.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z49 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/datapath.sv|[m
+[32m+[m[32mZ50 !s90 -reportprogress|300|-work|work|-sv|C:\Users\abdullah\Desktop\project\datapath.sv|[m
+ R12[m
+[31m-Z50 !s108 1569897037.560000[m
+[31m-Z51 !s107 C:/Users/abdullah/Desktop/project/datapath.sv|[m
+[32m+[m[32mZ51 !s108 1569896698.547000[m
+[32m+[m[32mZ52 !s107 C:\Users\abdullah\Desktop\project\datapath.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vdmem[m
+ R1[m
+[31m-Z52 !s100 0k=hOhgPPSAYAP]5lBD9J0[m
+[31m-Z53 Im@9Wn:Yi=eO7jjBaPbAHm0[m
+[31m-Z54 V09OGzlPeaYS`EJSH7=l6?2[m
+[31m-Z55 !s105 dmem_sv_unit[m
+[32m+[m[32mZ53 !s100 0k=hOhgPPSAYAP]5lBD9J0[m
+[32m+[m[32mZ54 Im@9Wn:Yi=eO7jjBaPbAHm0[m
+[32m+[m[32mZ55 V09OGzlPeaYS`EJSH7=l6?2[m
+[32m+[m[32mZ56 !s105 dmem_sv_unit[m
+ S1[m
+ R6[m
+[31m-Z56 w1569893300[m
+[31m-Z57 8C:/Users/abdullah/Desktop/project/dmem.sv[m
+[31m-Z58 FC:/Users/abdullah/Desktop/project/dmem.sv[m
+[32m+[m[32mZ57 w1569893300[m
+[32m+[m[32mZ58 8C:/Users/abdullah/Desktop/project/dmem.sv[m
+[32m+[m[32mZ59 FC:/Users/abdullah/Desktop/project/dmem.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z59 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/dmem.sv|[m
+[32m+[m[32mZ60 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/dmem.sv|[m
+ R12[m
+[31m-Z60 !s108 1569897037.795000[m
+[31m-Z61 !s107 C:/Users/abdullah/Desktop/project/dmem.sv|[m
+[32m+[m[32mZ61 !s108 1569896698.750000[m
+[32m+[m[32mZ62 !s107 C:/Users/abdullah/Desktop/project/dmem.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vextnext[m
+ R1[m
+[31m-Z62 !s100 Ua9JO7A22gf>BmJ;3BoHA2[m
+[31m-Z63 IU<DFI4^O7F?`7mz0P_o:_3[m
+[31m-Z64 VKN`0^M`Xm]81oSnDzIWfo1[m
+[31m-Z65 !s105 extnext_sv_unit[m
+[32m+[m[32mZ63 !s100 Ua9JO7A22gf>BmJ;3BoHA2[m
+[32m+[m[32mZ64 IU<DFI4^O7F?`7mz0P_o:_3[m
+[32m+[m[32mZ65 VKN`0^M`Xm]81oSnDzIWfo1[m
+[32m+[m[32mZ66 !s105 extnext_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z66 8C:/Users/abdullah/Desktop/project/extnext.sv[m
+[31m-Z67 FC:/Users/abdullah/Desktop/project/extnext.sv[m
+[32m+[m[32mZ67 8C:/Users/abdullah/Desktop/project/extnext.sv[m
+[32m+[m[32mZ68 FC:/Users/abdullah/Desktop/project/extnext.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z68 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/extnext.sv|[m
+[32m+[m[32mZ69 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/extnext.sv|[m
+ R12[m
+[31m-Z69 !s108 1569897038.170000[m
+[31m-Z70 !s107 C:/Users/abdullah/Desktop/project/extnext.sv|[m
+[32m+[m[32mZ70 !s108 1569896699.015000[m
+[32m+[m[32mZ71 !s107 C:/Users/abdullah/Desktop/project/extnext.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vflopr[m
+ R1[m
+[31m-Z71 !s100 h139[KLX`i1mjFmdkMaRX0[m
+[31m-Z72 IGfIf12BG<E[JomL8Xih3E1[m
+[31m-Z73 VKfe>keNPnLBlHh<KCg1o52[m
+[31m-Z74 !s105 flopr2023_sv_unit[m
+[32m+[m[32mZ72 !s100 h139[KLX`i1mjFmdkMaRX0[m
+[32m+[m[32mZ73 IGfIf12BG<E[JomL8Xih3E1[m
+[32m+[m[32mZ74 VKfe>keNPnLBlHh<KCg1o52[m
+[32m+[m[32mZ75 !s105 flopr2023_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z75 8C:/Users/abdullah/Desktop/project/flopr #.sv[m
+[31m-Z76 FC:/Users/abdullah/Desktop/project/flopr #.sv[m
+[32m+[m[32mZ76 8C:/Users/abdullah/Desktop/project/flopr #.sv[m
+[32m+[m[32mZ77 FC:/Users/abdullah/Desktop/project/flopr #.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z77 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/flopr #.sv|[m
+[32m+[m[32mZ78 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/flopr #.sv|[m
+ R12[m
+[31m-Z78 !s108 1569897038.498000[m
+[31m-Z79 !s107 C:/Users/abdullah/Desktop/project/flopr #.sv|[m
+[32m+[m[32mZ79 !s108 1569896699.219000[m
+[32m+[m[32mZ80 !s107 C:/Users/abdullah/Desktop/project/flopr #.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vimem[m
+ R1[m
+[31m-Z80 !s100 MLfJ[[;o>`jO8LRMXfY110[m
+[31m-Z81 Ig9I;^`g7>O@Pi;:RMFHTP1[m
+[31m-Z82 V_eezcn[fFK3m2C;IUCfT<1[m
+[31m-Z83 !s105 imem_sv_unit[m
+[32m+[m[32mZ81 !s100 MLfJ[[;o>`jO8LRMXfY110[m
+[32m+[m[32mZ82 Ig9I;^`g7>O@Pi;:RMFHTP1[m
+[32m+[m[32mZ83 V_eezcn[fFK3m2C;IUCfT<1[m
+[32m+[m[32mZ84 !s105 imem_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z84 8C:/Users/abdullah/Desktop/project/imem.sv[m
+[31m-Z85 FC:/Users/abdullah/Desktop/project/imem.sv[m
+[32m+[m[32mZ85 8C:/Users/abdullah/Desktop/project/imem.sv[m
+[32m+[m[32mZ86 FC:/Users/abdullah/Desktop/project/imem.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z86 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/imem.sv|[m
+[32m+[m[32mZ87 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/imem.sv|[m
+ R12[m
+[31m-Z87 !s108 1569897038.716000[m
+[31m-Z88 !s107 C:/Users/abdullah/Desktop/project/imem.sv|[m
+[32m+[m[32mZ88 !s108 1569896699.437000[m
+[32m+[m[32mZ89 !s107 C:/Users/abdullah/Desktop/project/imem.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vmaindec[m
+ R1[m
+[31m-Z89 !s100 TbmJ]WI6GMZoUnHZh_^3<2[m
+[31m-Z90 IMiCIDdZQg42TNhJX80[433[m
+[31m-Z91 V>9MEXVdMFiOa17>aFROT03[m
+[32m+[m[32mZ90 I>>b<06;h^E5VjJ:Z`K^U92[m
+[32m+[m[32mZ91 VKkWTENzQMJi8DH?lH[7kM1[m
+ Z92 !s105 maindec_sv_unit[m
+ S1[m
+ R6[m
+[31m-R37[m
+[31m-Z93 8C:/Users/abdullah/Desktop/project/maindec.sv[m
+[31m-Z94 FC:/Users/abdullah/Desktop/project/maindec.sv[m
+[32m+[m[32mZ93 w1569896690[m
+[32m+[m[32mZ94 8C:/Users/abdullah/Desktop/project/maindec.sv[m
+[32m+[m[32mZ95 FC:/Users/abdullah/Desktop/project/maindec.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z95 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/maindec.sv|[m
+[32m+[m[32mZ96 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/maindec.sv|[m
+ R12[m
+[31m-Z96 !s108 1569897038.951000[m
+[31m-Z97 !s107 C:/Users/abdullah/Desktop/project/maindec.sv|[m
+[32m+[m[32mZ97 !s100 I_hgDMd>g0fd:F>=8acDg2[m
+[32m+[m[32mZ98 !s108 1569896699.672000[m
+[32m+[m[32mZ99 !s107 C:/Users/abdullah/Desktop/project/maindec.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vmips[m
+ R1[m
+[31m-Z98 !s100 jDnXF^U3GcKg4]nlm[HEP3[m
+[31m-Z99 IW4:nWHCJNeN1X@G`<ecI83[m
+[31m-Z100 Va2;eVEc7`hU<K]<IICd^52[m
+[31m-Z101 !s105 mips_sv_unit[m
+[32m+[m[32mZ100 !s100 WN9Hz1?_ifDWdF63>Baoi2[m
+[32m+[m[32mZ101 IRfliP4VQ=UDi5PmonDjI`1[m
+[32m+[m[32mZ102 Va2;eVEc7`hU<K]<IICd^52[m
+[32m+[m[32mZ103 !s105 mips_sv_unit[m
+ S1[m
+ R6[m
+[31m-R37[m
+[31m-Z102 8C:/Users/abdullah/Desktop/project/mips.sv[m
+[31m-Z103 FC:/Users/abdullah/Desktop/project/mips.sv[m
+[32m+[m[32mZ104 w1569889141[m
+[32m+[m[32mZ105 8C:/Users/abdullah/Desktop/project/mips.sv[m
+[32m+[m[32mZ106 FC:/Users/abdullah/Desktop/project/mips.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z104 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/mips.sv|[m
+[32m+[m[32mZ107 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/mips.sv|[m
+ R12[m
+[31m-Z105 !s108 1569897039.185000[m
+[31m-Z106 !s107 C:/Users/abdullah/Desktop/project/mips.sv|[m
+[32m+[m[32mZ108 !s108 1569896700.078000[m
+[32m+[m[32mZ109 !s107 C:/Users/abdullah/Desktop/project/mips.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vmux2[m
+ R1[m
+[31m-Z107 !s100 @4OAMFSUhL;:;8CMLYY;^0[m
+[31m-Z108 IjY[LMR@oZZ<:A]49YeFUS3[m
+[31m-Z109 VT8RWJBjAIeM]>7U=5kBkT1[m
+[31m-Z110 !s105 mux22023_sv_unit[m
+[32m+[m[32mZ110 !s100 @4OAMFSUhL;:;8CMLYY;^0[m
+[32m+[m[32mZ111 IjY[LMR@oZZ<:A]49YeFUS3[m
+[32m+[m[32mZ112 VT8RWJBjAIeM]>7U=5kBkT1[m
+[32m+[m[32mZ113 !s105 mux22023_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z111 8C:/Users/abdullah/Desktop/project/mux2 #.sv[m
+[31m-Z112 FC:/Users/abdullah/Desktop/project/mux2 #.sv[m
+[32m+[m[32mZ114 8C:/Users/abdullah/Desktop/project/mux2 #.sv[m
+[32m+[m[32mZ115 FC:/Users/abdullah/Desktop/project/mux2 #.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z113 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/mux2 #.sv|[m
+[32m+[m[32mZ116 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/mux2 #.sv|[m
+ R12[m
+[31m-Z114 !s108 1569897039.529000[m
+[31m-Z115 !s107 C:/Users/abdullah/Desktop/project/mux2 #.sv|[m
+[32m+[m[32mZ117 !s108 1569896700.250000[m
+[32m+[m[32mZ118 !s107 C:/Users/abdullah/Desktop/project/mux2 #.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vregfile[m
+ R1[m
+[31m-Z116 !s100 8QhdVcRQnPT7P8_S8;Y5c3[m
+[31m-Z117 IP`GEL1]O^_b7O0V^EI^830[m
+[31m-Z118 Vl>JD@?ekG29h[?;gM3Z2H1[m
+[31m-Z119 !s105 regfile_sv_unit[m
+[32m+[m[32mZ119 !s100 8QhdVcRQnPT7P8_S8;Y5c3[m
+[32m+[m[32mZ120 IP`GEL1]O^_b7O0V^EI^830[m
+[32m+[m[32mZ121 Vl>JD@?ekG29h[?;gM3Z2H1[m
+[32m+[m[32mZ122 !s105 regfile_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z120 8C:/Users/abdullah/Desktop/project/regfile.sv[m
+[31m-Z121 FC:/Users/abdullah/Desktop/project/regfile.sv[m
+[32m+[m[32mZ123 8C:/Users/abdullah/Desktop/project/regfile.sv[m
+[32m+[m[32mZ124 FC:/Users/abdullah/Desktop/project/regfile.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z122 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/regfile.sv|[m
+[32m+[m[32mZ125 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/regfile.sv|[m
+ R12[m
+[31m-Z123 !s108 1569897039.997000[m
+[31m-Z124 !s107 C:/Users/abdullah/Desktop/project/regfile.sv|[m
+[32m+[m[32mZ126 !s108 1569896700.484000[m
+[32m+[m[32mZ127 !s107 C:/Users/abdullah/Desktop/project/regfile.sv|[m
+[32m+[m[32m!i10b 1[m
+[32m+[m[32m!s85 0[m
+[32m+[m[32m!s101 -O0[m
+[32m+[m[32mvsignex[m
+[32m+[m[32mR1[m
+[32m+[m[32mZ128 IlRVH_zd=aFFcMgVV6cSDP3[m
+[32m+[m[32mZ129 V[ka^c_4ck_azZ:_6AGij<2[m
+[32m+[m[32mZ130 !s105 signex_sv_unit[m
+[32m+[m[32mS1[m
+[32m+[m[32mR6[m
+[32m+[m[32mZ131 w1569887270[m
+[32m+[m[32mZ132 8C:\Users\abdullah\Desktop\project\signex.sv[m
+[32m+[m[32mZ133 FC:\Users\abdullah\Desktop\project\signex.sv[m
+[32m+[m[32mL0 1[m
+[32m+[m[32mR10[m
+[32m+[m[32mr1[m
+[32m+[m[32m31[m
+[32m+[m[32mZ134 !s90 -reportprogress|300|-work|work|-sv|C:\Users\abdullah\Desktop\project\signex.sv|[m
+[32m+[m[32mR12[m
+[32m+[m[32mZ135 !s100 ?B:la>HM_KHm<8HE9RTRZ0[m
+[32m+[m[32mZ136 !s108 1569887275.113000[m
+[32m+[m[32mZ137 !s107 C:\Users\abdullah\Desktop\project\signex.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vsignext[m
+ R1[m
+[31m-Z125 !s100 4ezWhHK9^:1KoChLiL=6o0[m
+[31m-Z126 IjV`AHo_lRbWERiY]4o?jo3[m
+[31m-Z127 VzXjEl4X;;[WhS@=1HjFT41[m
+[31m-Z128 !s105 signext_sv_unit[m
+[32m+[m[32mZ138 !s100 4ezWhHK9^:1KoChLiL=6o0[m
+[32m+[m[32mZ139 IjV`AHo_lRbWERiY]4o?jo3[m
+[32m+[m[32mZ140 VzXjEl4X;;[WhS@=1HjFT41[m
+[32m+[m[32mZ141 !s105 signext_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z129 8C:/Users/abdullah/Desktop/project/signext.sv[m
+[31m-Z130 FC:/Users/abdullah/Desktop/project/signext.sv[m
+[32m+[m[32mZ142 8C:/Users/abdullah/Desktop/project/signext.sv[m
+[32m+[m[32mZ143 FC:/Users/abdullah/Desktop/project/signext.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z131 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/signext.sv|[m
+[32m+[m[32mZ144 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/signext.sv|[m
+ R12[m
+[31m-Z132 !s108 1569897040.232000[m
+[31m-Z133 !s107 C:/Users/abdullah/Desktop/project/signext.sv|[m
+[32m+[m[32mZ145 !s108 1569896700.703000[m
+[32m+[m[32mZ146 !s107 C:/Users/abdullah/Desktop/project/signext.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vsl2[m
+ R1[m
+[31m-Z134 !s100 eUjJF1;g2XLbUZ<`Q`D@N1[m
+[31m-Z135 I2SAZeHYoUMG0Wa8goLQ4:3[m
+[31m-Z136 VMHGRbO<8oJM:TjGW_j2PX2[m
+[31m-Z137 !s105 sl2_sv_unit[m
+[32m+[m[32mZ147 !s100 eUjJF1;g2XLbUZ<`Q`D@N1[m
+[32m+[m[32mZ148 I2SAZeHYoUMG0Wa8goLQ4:3[m
+[32m+[m[32mZ149 VMHGRbO<8oJM:TjGW_j2PX2[m
+[32m+[m[32mZ150 !s105 sl2_sv_unit[m
+ S1[m
+ R6[m
+ R7[m
+[31m-Z138 8C:/Users/abdullah/Desktop/project/sl2.sv[m
+[31m-Z139 FC:/Users/abdullah/Desktop/project/sl2.sv[m
+[32m+[m[32mZ151 8C:/Users/abdullah/Desktop/project/sl2.sv[m
+[32m+[m[32mZ152 FC:/Users/abdullah/Desktop/project/sl2.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z140 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/sl2.sv|[m
+[32m+[m[32mZ153 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/sl2.sv|[m
+ R12[m
+[31m-Z141 !s108 1569897040.513000[m
+[31m-Z142 !s107 C:/Users/abdullah/Desktop/project/sl2.sv|[m
+[32m+[m[32mZ154 !s108 1569896700.953000[m
+[32m+[m[32mZ155 !s107 C:/Users/abdullah/Desktop/project/sl2.sv|[m
+ !i10b 1[m
+ !s85 0[m
+ !s101 -O0[m
+ vtestbench[m
+ R1[m
+[31m-Z143 !s100 Z[e`Jn4j?2ncL?JblJo[02[m
+[31m-Z144 IF=hYOWX_lJ9@P`ffX7X5P1[m
+[31m-Z145 VhGfW:390DM[oDMzegDH9`2[m
+[31m-Z146 !s105 testbench_sv_unit[m
+[32m+[m[32mZ156 !s100 NZ[C<@Vhi;>2V>mhG2P=n2[m
+[32m+[m[32mZ157 IDF5KZ7[h68Y?RalWH_PEU3[m
+[32m+[m[32mZ158 VhGfW:390DM[oDMzegDH9`2[m
+[32m+[m[32mZ159 !s105 testbench_sv_unit[m
+ S1[m
+ R6[m
+[31m-R37[m
+[31m-Z147 8C:/Users/abdullah/Desktop/project/testbench.sv[m
+[31m-Z148 FC:/Users/abdullah/Desktop/project/testbench.sv[m
+[32m+[m[32mZ160 w1569896253[m
+[32m+[m[32mZ161 8C:/Users/abdullah/Desktop/project/testbench.sv[m
+[32m+[m[32mZ162 FC:/Users/abdullah/Desktop/project/testbench.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ 31[m
+[31m-Z149 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/testbench.sv|[m
+[32m+[m[32mZ163 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/testbench.sv|[m
+ R12[m
+ !i10b 1[m
+ !s85 0[m
+[31m-Z150 !s108 1569897040.935000[m
+[31m-Z151 !s107 C:/Users/abdullah/Desktop/project/testbench.sv|[m
+[32m+[m[32mZ164 !s108 1569896701.281000[m
+[32m+[m[32mZ165 !s107 C:/Users/abdullah/Desktop/project/testbench.sv|[m
+ !s101 -O0[m
+ vtop[m
+ R1[m
+ !i10b 1[m
+[31m-Z152 !s100 KO_N[bQ[nMTl5B_7[OQGA1[m
+[31m-Z153 I`zD`Hg8Bg;AV@czlbHPfi2[m
+[31m-Z154 V=TIn67B?1ag:LQ8NchNYN0[m
+[31m-Z155 !s105 top_sv_unit[m
+[32m+[m[32mZ166 !s100 KO_N[bQ[nMTl5B_7[OQGA1[m
+[32m+[m[32mZ167 I`zD`Hg8Bg;AV@czlbHPfi2[m
+[32m+[m[32mZ168 V=TIn67B?1ag:LQ8NchNYN0[m
+[32m+[m[32mZ169 !s105 top_sv_unit[m
+ S1[m
+ R6[m
+[31m-w1569893230[m
+[31m-Z156 8C:/Users/abdullah/Desktop/project/top.sv[m
+[31m-Z157 FC:/Users/abdullah/Desktop/project/top.sv[m
+[32m+[m[32mZ170 w1569893230[m
+[32m+[m[32mZ171 8C:/Users/abdullah/Desktop/project/top.sv[m
+[32m+[m[32mZ172 FC:/Users/abdullah/Desktop/project/top.sv[m
+ L0 1[m
+ R10[m
+ r1[m
+ !s85 0[m
+ 31[m
+[31m-!s108 1569897041.169000[m
+[32m+[m[32m!s108 1569896701.499000[m
+ !s107 C:/Users/abdullah/Desktop/project/top.sv|[m
+[31m-Z158 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/top.sv|[m
+[32m+[m[32mZ173 !s90 -reportprogress|300|-work|work|-sv|C:/Users/abdullah/Desktop/project/top.sv|[m
+ !s101 -O0[m
+ R12[m
+[1mdiff --git a/work/adder/_primary.dat b/work/adder/_primary.dat[m
+[1mindex b420df4..e5a99c0 100644[m
+Binary files a/work/adder/_primary.dat and b/work/adder/_primary.dat differ
+[1mdiff --git a/work/adder/_primary.dbs b/work/adder/_primary.dbs[m
+[1mindex 07b56bf..8194e2f 100644[m
+Binary files a/work/adder/_primary.dbs and b/work/adder/_primary.dbs differ
+[1mdiff --git a/work/alu/_primary.dat b/work/alu/_primary.dat[m
+[1mindex 4f275af..ea06be1 100644[m
+Binary files a/work/alu/_primary.dat and b/work/alu/_primary.dat differ
+[1mdiff --git a/work/alu/_primary.dbs b/work/alu/_primary.dbs[m
+[1mindex efaf8c3..07323ad 100644[m
+Binary files a/work/alu/_primary.dbs and b/work/alu/_primary.dbs differ
+[1mdiff --git a/work/aludec/_primary.dat b/work/aludec/_primary.dat[m
+[1mindex a658d62..83d39de 100644[m
+Binary files a/work/aludec/_primary.dat and b/work/aludec/_primary.dat differ
+[1mdiff --git a/work/aludec/_primary.dbs b/work/aludec/_primary.dbs[m
+[1mindex 2e05a33..799cbcb 100644[m
+Binary files a/work/aludec/_primary.dbs and b/work/aludec/_primary.dbs differ
+[1mdiff --git a/work/controller/_primary.dat b/work/controller/_primary.dat[m
+[1mindex 77da4bb..47fee4c 100644[m
+Binary files a/work/controller/_primary.dat and b/work/controller/_primary.dat differ
+[1mdiff --git a/work/controller/_primary.dbs b/work/controller/_primary.dbs[m
+[1mindex ed336b6..1e03014 100644[m
+Binary files a/work/controller/_primary.dbs and b/work/controller/_primary.dbs differ
+[1mdiff --git a/work/controller/_primary.vhd b/work/controller/_primary.vhd[m
+[1mindex 95e81bf..89a476c 100644[m
+[1m--- a/work/controller/_primary.vhd[m
+[1m+++ b/work/controller/_primary.vhd[m
+[36m@@ -13,6 +13,8 @@[m [mentity controller is[m
+         regwrite        : out    vl_logic;[m
+         jump            : out    vl_logic;[m
+         ne              : out    vl_logic;[m
+[32m+[m[32m        half            : out    vl_logic;[m
+[32m+[m[32m        b               : out    vl_logic;[m
+         alucontrol      : out    vl_logic_vector(2 downto 0)[m
+     );[m
+ end controller;[m
+[1mdiff --git a/work/controller/verilog.prw b/work/controller/verilog.prw[m
+[1mindex 1deee90..2ef01d3 100644[m
+Binary files a/work/controller/verilog.prw and b/work/controller/verilog.prw differ
+[1mdiff --git a/work/controller/verilog.psm b/work/controller/verilog.psm[m
+[1mindex 2fabd70..e738622 100644[m
+Binary files a/work/controller/verilog.psm and b/work/controller/verilog.psm differ
+[1mdiff --git a/work/datapath/_primary.dat b/work/datapath/_primary.dat[m
+[1mindex 14c197d..6a6df98 100644[m
+Binary files a/work/datapath/_primary.dat and b/work/datapath/_primary.dat differ
+[1mdiff --git a/work/datapath/_primary.dbs b/work/datapath/_primary.dbs[m
+[1mindex 45d438f..d34ca73 100644[m
+Binary files a/work/datapath/_primary.dbs and b/work/datapath/_primary.dbs differ
+[1mdiff --git a/work/datapath/_primary.vhd b/work/datapath/_primary.vhd[m
+[1mindex b3f4087..47a3603 100644[m
+[1m--- a/work/datapath/_primary.vhd[m
+[1m+++ b/work/datapath/_primary.vhd[m
+[36m@@ -11,6 +11,8 @@[m [mentity datapath is[m
+         regdst          : in     vl_logic;[m
+         regwrite        : in     vl_logic;[m
+         jump            : in     vl_logic;[m
+[32m+[m[32m        half            : in     vl_logic;[m
+[32m+[m[32m        b               : in     vl_logic;[m
+         alucontrol      : in     vl_logic_vector(2 downto 0);[m
+         zero            : out    vl_logic;[m
+         pc              : out    vl_logic_vector(31 downto 0);[m
+[1mdiff --git a/work/datapath/verilog.prw b/work/datapath/verilog.prw[m
+[1mindex f293970..1b823ed 100644[m
+Binary files a/work/datapath/verilog.prw and b/work/datapath/verilog.prw differ
+[1mdiff --git a/work/datapath/verilog.psm b/work/datapath/verilog.psm[m
+[1mindex 2025d2b..c5301e5 100644[m
+Binary files a/work/datapath/verilog.psm and b/work/datapath/verilog.psm differ
+[1mdiff --git a/work/dmem/_primary.dat b/work/dmem/_primary.dat[m
+[1mindex fdbc2b5..49f9cbc 100644[m
+Binary files a/work/dmem/_primary.dat and b/work/dmem/_primary.dat differ
+[1mdiff --git a/work/dmem/_primary.dbs b/work/dmem/_primary.dbs[m
+[1mindex dfde5fc..b1eff9e 100644[m
+Binary files a/work/dmem/_primary.dbs and b/work/dmem/_primary.dbs differ
+[1mdiff --git a/work/extnext/_primary.dat b/work/extnext/_primary.dat[m
+[1mindex 7ee7f87..87fc3e3 100644[m
+Binary files a/work/extnext/_primary.dat and b/work/extnext/_primary.dat differ
+[1mdiff --git a/work/extnext/_primary.dbs b/work/extnext/_primary.dbs[m
+[1mindex 61ffe44..1ac0838 100644[m
+Binary files a/work/extnext/_primary.dbs and b/work/extnext/_primary.dbs differ
+[1mdiff --git a/work/flopr/_primary.dat b/work/flopr/_primary.dat[m
+[1mindex 924d8a7..3407e8c 100644[m
+Binary files a/work/flopr/_primary.dat and b/work/flopr/_primary.dat differ
+[1mdiff --git a/work/flopr/_primary.dbs b/work/flopr/_primary.dbs[m
+[1mindex abe41d8..f14c452 100644[m
+Binary files a/work/flopr/_primary.dbs and b/work/flopr/_primary.dbs differ
+[1mdiff --git a/work/imem/_primary.dat b/work/imem/_primary.dat[m
+[1mindex 5ff5be9..dd4d8d8 100644[m
+Binary files a/work/imem/_primary.dat and b/work/imem/_primary.dat differ
+[1mdiff --git a/work/imem/_primary.dbs b/work/imem/_primary.dbs[m
+[1mindex 3a57313..9cacb53 100644[m
+Binary files a/work/imem/_primary.dbs and b/work/imem/_primary.dbs differ
+[1mdiff --git a/work/maindec/_primary.dat b/work/maindec/_primary.dat[m
+[1mindex ac1d06f..cbaaf3c 100644[m
+Binary files a/work/maindec/_primary.dat and b/work/maindec/_primary.dat differ
+[1mdiff --git a/work/maindec/_primary.dbs b/work/maindec/_primary.dbs[m
+[1mindex 0b4b369..011e737 100644[m
+Binary files a/work/maindec/_primary.dbs and b/work/maindec/_primary.dbs differ
+[1mdiff --git a/work/maindec/_primary.vhd b/work/maindec/_primary.vhd[m
+[1mindex ce4f594..54b0d14 100644[m
+[1m--- a/work/maindec/_primary.vhd[m
+[1m+++ b/work/maindec/_primary.vhd[m
+[36m@@ -11,6 +11,8 @@[m [mentity maindec is[m
+         regwrite        : out    vl_logic;[m
+         jump            : out    vl_logic;[m
+         ne              : out    vl_logic;[m
+[32m+[m[32m        half            : out    vl_logic;[m
+[32m+[m[32m        b               : out    vl_logic;[m
+         aluop           : out    vl_logic_vector(1 downto 0)[m
+     );[m
+ end maindec;[m
+[1mdiff --git a/work/maindec/verilog.prw b/work/maindec/verilog.prw[m
+[1mindex 99b0b50..5737720 100644[m
+Binary files a/work/maindec/verilog.prw and b/work/maindec/verilog.prw differ
+[1mdiff --git a/work/maindec/verilog.psm b/work/maindec/verilog.psm[m
+[1mindex 2db8f71..0bc7cbe 100644[m
+Binary files a/work/maindec/verilog.psm and b/work/maindec/verilog.psm differ
+[1mdiff --git a/work/mips/_primary.dat b/work/mips/_primary.dat[m
+[1mindex 304fcf1..632875c 100644[m
+Binary files a/work/mips/_primary.dat and b/work/mips/_primary.dat differ
+[1mdiff --git a/work/mips/_primary.dbs b/work/mips/_primary.dbs[m
+[1mindex 718e920..b05c3c5 100644[m
+Binary files a/work/mips/_primary.dbs and b/work/mips/_primary.dbs differ
+[1mdiff --git a/work/mips/verilog.psm b/work/mips/verilog.psm[m
+[1mindex 7baef5c..8a29b0f 100644[m
+Binary files a/work/mips/verilog.psm and b/work/mips/verilog.psm differ
+[1mdiff --git a/work/mux2/_primary.dat b/work/mux2/_primary.dat[m
+[1mindex a98c93a..ee535c4 100644[m
+Binary files a/work/mux2/_primary.dat and b/work/mux2/_primary.dat differ
+[1mdiff --git a/work/mux2/_primary.dbs b/work/mux2/_primary.dbs[m
+[1mindex 53689f8..7f87c5f 100644[m
+Binary files a/work/mux2/_primary.dbs and b/work/mux2/_primary.dbs differ
+[1mdiff --git a/work/regfile/_primary.dat b/work/regfile/_primary.dat[m
+[1mindex d12dee2..4e8eac8 100644[m
+Binary files a/work/regfile/_primary.dat and b/work/regfile/_primary.dat differ
+[1mdiff --git a/work/regfile/_primary.dbs b/work/regfile/_primary.dbs[m
+[1mindex 4488dc0..a5946ae 100644[m
+Binary files a/work/regfile/_primary.dbs and b/work/regfile/_primary.dbs differ
+[1mdiff --git a/work/signext/_primary.dat b/work/signext/_primary.dat[m
+[1mindex 211bd4d..931614a 100644[m
+Binary files a/work/signext/_primary.dat and b/work/signext/_primary.dat differ
+[1mdiff --git a/work/signext/_primary.dbs b/work/signext/_primary.dbs[m
+[1mindex e2e888d..3025547 100644[m
+Binary files a/work/signext/_primary.dbs and b/work/signext/_primary.dbs differ
+[1mdiff --git a/work/sl2/_primary.dat b/work/sl2/_primary.dat[m
+[1mindex 4a2d2aa..8dd77c1 100644[m
+Binary files a/work/sl2/_primary.dat and b/work/sl2/_primary.dat differ
+[1mdiff --git a/work/sl2/_primary.dbs b/work/sl2/_primary.dbs[m
+[1mindex 2b5594a..8d98625 100644[m
+Binary files a/work/sl2/_primary.dbs and b/work/sl2/_primary.dbs differ
+[1mdiff --git a/work/testbench/_primary.dat b/work/testbench/_primary.dat[m
+[1mindex 2082360..4af6794 100644[m
+Binary files a/work/testbench/_primary.dat and b/work/testbench/_primary.dat differ
+[1mdiff --git a/work/testbench/_primary.dbs b/work/testbench/_primary.dbs[m
+[1mindex acf9c44..99d7e96 100644[m
+Binary files a/work/testbench/_primary.dbs and b/work/testbench/_primary.dbs differ
+[1mdiff --git a/work/testbench/verilog.prw b/work/testbench/verilog.prw[m
+[1mindex c691a7d..bf36d49 100644[m
+Binary files a/work/testbench/verilog.prw and b/work/testbench/verilog.prw differ
+[1mdiff --git a/work/testbench/verilog.psm b/work/testbench/verilog.psm[m
+[1mindex 2e4e453..b8c3946 100644[m
+Binary files a/work/testbench/verilog.psm and b/work/testbench/verilog.psm differ
+[1mdiff --git a/work/top/_primary.dat b/work/top/_primary.dat[m
+[1mindex 7ec78b2..e559b2e 100644[m
+Binary files a/work/top/_primary.dat and b/work/top/_primary.dat differ
+[1mdiff --git a/work/top/_primary.dbs b/work/top/_primary.dbs[m
+[1mindex a2a2aba..6fb27ea 100644[m
+Binary files a/work/top/_primary.dbs and b/work/top/_primary.dbs differ

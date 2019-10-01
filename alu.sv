@@ -4,6 +4,7 @@ module alu(input logic [31:0] a,b,
             output logic  zero);
 
 
+
 always_comb
         case(f)
         3'b000: y=a&b;
@@ -20,8 +21,6 @@ always_comb
         end
         default: y=0;
         endcase
-
-
         assign zero =~(|y);
 
 
