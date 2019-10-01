@@ -1,5 +1,11 @@
 ## Load half and load byte
 
+### TOC:
+
+[TOC]
+
+
+
 ### introduction:
 
 a "Load half" and "Load byte" implementation in MIPS micro-architecture build upon Harris design in their book (reference)
