@@ -2,7 +2,7 @@
 
 ### introduction:
 
-a "Load half" and "Load byte" implementation in MIPS micro-architecture build upon Harris design in their book (reference)
+a "Load half" and "Load byte" implementation with MIPS micro-architecture build upon Harris design in their book (reference)
 
 `lh $storeReg imm($regRefearingToMemAddress)`
 
