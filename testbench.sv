@@ -24,7 +24,7 @@ always
 always @(negedge clk)
     begin
         if (memwrite) begin
-            if (dataadr === 80 & writedata === 32'b11111111111111111010101011111010) begin
+            if (dataadr === 80 & writedata === 32'b11111111111111111111111111111010) begin
                     $display("Simulation succeeded");
                     $stop;
             end else if (dataadr !== 80) begin
