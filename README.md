@@ -2,8 +2,17 @@
 
 ### TOC:
 
-[TOC]
+Table of Contents
+=================
 
+      * [Load half and load byte](#load-half-and-load-byte)
+         * [introduction:](#introduction)
+         * [Recipe:](#recipe)
+            * [Items/Pins:](#itemspins)
+            * [implementation:](#implementation)
+            * [schematic:](#schematic)
+         * [Testing:](#testing)
+         * [Reference:](#reference)
 
 
 ### introduction:
